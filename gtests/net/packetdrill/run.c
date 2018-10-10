@@ -456,7 +456,7 @@ void set_scheduling_priority(void)
 	if (num_cpus <= 1)
 		return;
 
-#if !defined(__OpenBSD__) && !defined(__APPLE__)
+#if !defined(__OpenBSD__) && !defined(__APPLE__) && !defined(__FreeBSD__)
 	/* Chose a real-time policy, but use SCHED_RR instead of
 	 * SCHED_FIFO, so that we round-robin among real-time threads
 	 * of the same priority. In practice this shouldn't matter,

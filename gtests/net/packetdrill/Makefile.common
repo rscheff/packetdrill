@@ -1,7 +1,7 @@
 all: binaries
 
 CFLAGS += -g
-CFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer -fsanitize-coverage=trace-cmp,trace-gep,trace-div
+#CFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer -fsanitize-coverage=trace-cmp,trace-gep,trace-div
 
 parser.o: parser.y
 	bison --output=parser.c --defines=parser.h --report=state parser.y
