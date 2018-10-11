@@ -5097,7 +5097,7 @@ static int check_sctp_extrcvinfo(struct sctp_extrcvinfo_expr *expr,
 	if (check_u32_expr(expr->sinfo_context, sctp_extrcvinfo->sinfo_context,
 			   "sctp_extrcvinfo.sinfo_context", error))
 		return STATUS_ERR;
-#if __FreeBSD_version >= 1003000
+#if defined(__FreeBSD__) && __FreeBSD_version >= 1003000
 	if (check_u32_expr(expr->sinfo_pr_value, sctp_extrcvinfo->sinfo_pr_value,
 			   "sctp_extrcvinfo.sinfo_pr_value", error))
 		return STATUS_ERR;
@@ -5112,7 +5112,7 @@ static int check_sctp_extrcvinfo(struct sctp_extrcvinfo_expr *expr,
 	if (check_u32_expr(expr->sinfo_cumtsn, sctp_extrcvinfo->sinfo_cumtsn,
 			   "sctp_extrcvinfo.sinfo_cumtsn", error))
 		return STATUS_ERR;
-#if __FreeBSD_version >= 1003000
+#if defined(__FreeBSD__) && __FreeBSD_version >= 1003000
 	if (check_u16_expr(expr->serinfo_next_flags, sctp_extrcvinfo->serinfo_next_flags,
 			   "sctp_extrcvinfo.serinfo_next_flags", error))
 		return STATUS_ERR;
