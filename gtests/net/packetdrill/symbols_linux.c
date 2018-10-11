@@ -23,7 +23,7 @@
  * Allows us to map from symbolic strings to integers for system call inputs.
  */
 
-#if linux
+#if defined(linux)
 
 #include "symbols.h"
 

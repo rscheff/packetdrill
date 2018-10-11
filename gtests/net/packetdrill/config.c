@@ -410,87 +410,87 @@ void parse_non_fatal_arg(char *arg, struct config *config)
 
 
 /* Process a command line option */
-static void process_option(int opt, char *optarg, struct config *config,
+static void process_option(int opt, char *opt_arg, struct config *config,
 			   char *where)
 {
 	int port = 0;
 	char *end = NULL, *equals = NULL, *symbol = NULL, *value = NULL;
 	unsigned long speed = 0;
 
-	DEBUGP("process_option %d = %s\n", opt, optarg);
+	DEBUGP("process_option %d = %s\n", opt, opt_arg);
 
 	switch (opt) {
 	case OPT_IP_VERSION:
-		if (strcmp(optarg, "ipv4") == 0)
+		if (strcmp(opt_arg, "ipv4") == 0)
 			config->ip_version = IP_VERSION_4;
-		else if ((strcmp(optarg, "ipv4-mapped-ipv6") == 0) ||
-		         (strcmp(optarg, "ipv4_mapped_ipv6") == 0))
+		else if ((strcmp(opt_arg, "ipv4-mapped-ipv6") == 0) ||
+		         (strcmp(opt_arg, "ipv4_mapped_ipv6") == 0))
 			config->ip_version = IP_VERSION_4_MAPPED_6;
-		else if (strcmp(optarg, "ipv6") == 0)
+		else if (strcmp(opt_arg, "ipv6") == 0)
 			config->ip_version = IP_VERSION_6;
 		else
-			die("%s: bad --ip_version: %s\n", where, optarg);
+			die("%s: bad --ip_version: %s\n", where, opt_arg);
 		break;
 	case OPT_BIND_PORT:
-		port = atoi(optarg);
+		port = atoi(opt_arg);
 		if ((port <= 0) || (port > 0xffff))
-			die("%s: bad --bind_port: %s\n", where, optarg);
+			die("%s: bad --bind_port: %s\n", where, opt_arg);
 		config->live_bind_port = port;
 		break;
 	case OPT_CODE_COMMAND:
-		config->code_command_line = optarg;
+		config->code_command_line = opt_arg;
 		break;
 	case OPT_CODE_FORMAT:
-		config->code_format = optarg;
+		config->code_format = opt_arg;
 		break;
 	case OPT_CODE_SOCKOPT:
-		config->code_sockopt = optarg;
+		config->code_sockopt = opt_arg;
 		break;
 	case OPT_CONNECT_PORT:
-		port = atoi(optarg);
+		port = atoi(opt_arg);
 		if ((port <= 0) || (port > 0xffff))
-			die("%s: bad --connect_port: %s\n", where, optarg);
+			die("%s: bad --connect_port: %s\n", where, opt_arg);
 		config->live_connect_port = port;
 		break;
 	case OPT_REMOTE_IP:
-		strncpy(config->live_remote_ip_string, optarg, ADDR_STR_LEN-1);
+		strncpy(config->live_remote_ip_string, opt_arg, ADDR_STR_LEN-1);
 		break;
 	case OPT_LOCAL_IP:
-		strncpy(config->live_local_ip_string, optarg, ADDR_STR_LEN-1);
+		strncpy(config->live_local_ip_string, opt_arg, ADDR_STR_LEN-1);
 		break;
 	case OPT_GATEWAY_IP:
-		strncpy(config->live_gateway_ip_string, optarg, ADDR_STR_LEN-1);
+		strncpy(config->live_gateway_ip_string, opt_arg, ADDR_STR_LEN-1);
 		break;
 	case OPT_MTU:
-		config->mtu = atoi(optarg);
+		config->mtu = atoi(opt_arg);
 		if (config->mtu < 0)
-			die("%s: bad --mtu: %s\n", where, optarg);
+			die("%s: bad --mtu: %s\n", where, opt_arg);
 		break;
 	case OPT_NETMASK_IP:
-		strncpy(config->live_netmask_ip_string, optarg,	ADDR_STR_LEN-1);
+		strncpy(config->live_netmask_ip_string, opt_arg,	ADDR_STR_LEN-1);
 		break;
 	case OPT_INIT_SCRIPTS:
-		config->init_scripts = optarg;
+		config->init_scripts = opt_arg;
 		break;
 	case OPT_NON_FATAL:
-		parse_non_fatal_arg(optarg, config);
+		parse_non_fatal_arg(opt_arg, config);
 		break;
 	case OPT_SPEED:
-		speed = strtoul(optarg, &end, 10);
-		if (end == optarg || *end || !is_valid_u32(speed))
-			die("%s: bad --speed: %s\n", where, optarg);
+		speed = strtoul(opt_arg, &end, 10);
+		if (end == opt_arg || *end || !is_valid_u32(speed))
+			die("%s: bad --speed: %s\n", where, opt_arg);
 		config->speed = speed;
 		break;
 	case OPT_TOLERANCE_USECS:
-		config->tolerance_usecs = atoi(optarg);
+		config->tolerance_usecs = atoi(opt_arg);
 		if (config->tolerance_usecs <= 0)
-			die("%s: bad --tolerance_usecs: %s\n", where, optarg);
+			die("%s: bad --tolerance_usecs: %s\n", where, opt_arg);
 		break;
 	case OPT_TCP_TS_TICK_USECS:
-		config->tcp_ts_tick_usecs = atoi(optarg);
+		config->tcp_ts_tick_usecs = atoi(opt_arg);
 		if (config->tcp_ts_tick_usecs < 0 ||
 		    config->tcp_ts_tick_usecs > 1000000)
-			die("%s: bad --tcp_ts_tick_usecs: %s\n", where, optarg);
+			die("%s: bad --tcp_ts_tick_usecs: %s\n", where, opt_arg);
 		break;
 	case OPT_WIRE_CLIENT:
 		config->is_wire_client = true;
@@ -499,30 +499,30 @@ static void process_option(int opt, char *optarg, struct config *config,
 		config->is_wire_server = true;
 		break;
 	case OPT_WIRE_SERVER_IP:
-		config->wire_server_ip_string = strdup(optarg);
+		config->wire_server_ip_string = strdup(opt_arg);
 		config->wire_server_ip	=
 			ipv4_parse(config->wire_server_ip_string);
 		break;
 	case OPT_WIRE_SERVER_PORT:
-		port = atoi(optarg);
+		port = atoi(opt_arg);
 		if ((port <= 0) || (port > 0xffff))
-			die("%s: bad --wire_server_port: %s\n", where, optarg);
+			die("%s: bad --wire_server_port: %s\n", where, opt_arg);
 		config->wire_server_port = port;
 		break;
 	case OPT_WIRE_CLIENT_DEV:
-		config->wire_client_device = strdup(optarg);
+		config->wire_client_device = strdup(opt_arg);
 		break;
 	case OPT_WIRE_SERVER_DEV:
-		config->wire_server_device = strdup(optarg);
+		config->wire_server_device = strdup(opt_arg);
 		break;
 	case OPT_DRY_RUN:
 		config->dry_run = true;
 		break;
 	case OPT_DEFINE:
-		equals = strstr(optarg, "=");
-		if (equals == optarg || equals == NULL)
-			die("%s: bad definition: %s\n", where, optarg);
-		symbol = strndup(optarg, equals - optarg);
+		equals = strstr(opt_arg, "=");
+		if (equals == opt_arg || equals == NULL)
+			die("%s: bad definition: %s\n", where, opt_arg);
+		symbol = strndup(opt_arg, equals - opt_arg);
 		value = strdup(equals + 1);
 		definition_set(&config->defines, symbol, value);
 		break;
@@ -536,16 +536,16 @@ static void process_option(int opt, char *optarg, struct config *config,
 		debug_logging = true;
 		break;
 	case OPT_UDP_ENCAPS:
-		if (strcmp(optarg, "sctp") == 0)
+		if (strcmp(opt_arg, "sctp") == 0)
 			config->udp_encaps = IPPROTO_SCTP;
-		else if (strcmp(optarg, "tcp") == 0)
+		else if (strcmp(opt_arg, "tcp") == 0)
 			config->udp_encaps = IPPROTO_TCP;
 		else
-			die("%s: bad --udp_encapsulation: %s\n", where, optarg);
+			die("%s: bad --udp_encapsulation: %s\n", where, opt_arg);
 		break;
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
 	case OPT_TUN_DEV:
-		config->tun_device = strdup(optarg);
+		config->tun_device = strdup(opt_arg);
 		break;
 	case OPT_PERSISTENT_TUN_DEV:
 		config->persistent_tun_device = true;

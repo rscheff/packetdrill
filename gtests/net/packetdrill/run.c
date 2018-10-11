@@ -78,9 +78,9 @@ bool init_cmd_exists = false;
 const char *cleanup_cmd;
 
 /* Path of currently-executing script, for use in cleanup command errors: */
-const char *script_path;
+const char *global_script_path;
 
-static struct state *state = NULL;
+static struct state *global_state = NULL;
 
 struct state *state_new(struct config *config,
 			struct script *script,
@@ -533,10 +533,10 @@ static s64 schedule_start_time_usecs(void)
 
 void signal_handler(int signal_number)
 {
-	if (state != NULL) {
-		close_all_sockets(state);
-		if (state->netdev != NULL) {
-			netdev_free(state->netdev);
+	if (global_state != NULL) {
+		close_all_sockets(global_state);
+		if (global_state->netdev != NULL) {
+			netdev_free(global_state->netdev);
 		}
 	}
 	die("Handled signal %d\n", signal_number);
@@ -555,7 +555,7 @@ int run_cleanup_command(void)
 		if (safe_system(cleanup_cmd, &error)) {
 			fprintf(stderr,
 				"%s: error executing cleanup command: %s\n",
-				 script_path, error);
+				 global_script_path, error);
 			free(error);
 			return STATUS_ERR;
 		}
@@ -592,7 +592,7 @@ void run_script(struct config *config, struct script *script)
 	/* This interpreter loop runs for local mode or wire client mode. */
 	assert(!config->is_wire_server);
 
-	script_path = config->script_path;
+	global_script_path = config->script_path;
 
 	/* How we use the network is of course a little different in
 	 * each of the two cases....
@@ -602,11 +602,11 @@ void run_script(struct config *config, struct script *script)
 	else
 		netdev = local_netdev_new(config);
 
-	state = state_new(config, script, netdev);
+	global_state = state_new(config, script, netdev);
 
 	if (config->is_wire_client) {
-		state->wire_client = wire_client_new();
-		wire_client_init(state->wire_client, config, script, state);
+		global_state->wire_client = wire_client_new();
+		wire_client_init(global_state->wire_client, config, script, global_state);
 	}
 
 	if (script->init_command != NULL) {
@@ -622,49 +622,49 @@ void run_script(struct config *config, struct script *script)
 
 	signal(SIGPIPE, SIG_IGN);	/* ignore EPIPE */
 
-	state->live_start_time_usecs = schedule_start_time_usecs();
+	global_state->live_start_time_usecs = schedule_start_time_usecs();
 	DEBUGP("live_start_time_usecs is %lld\n",
-	       state->live_start_time_usecs);
+	       global_state->live_start_time_usecs);
 
-	if (state->wire_client != NULL)
-		wire_client_send_client_starting(state->wire_client);
+	if (global_state->wire_client != NULL)
+		wire_client_send_client_starting(global_state->wire_client);
 
 	while (1) {
-		if (get_next_event(state, &error)) {
-			state_free(state, 1);
+		if (get_next_event(global_state, &error)) {
+			state_free(global_state, 1);
 			die("%s\n", error);
 		}
-		event = state->event;
+		event = global_state->event;
 		if (event == NULL)
 			break;
 
-		if (state->wire_client != NULL)
-			wire_client_next_event(state->wire_client, event);
+		if (global_state->wire_client != NULL)
+			wire_client_next_event(global_state->wire_client, event);
 
 		/* In wire mode, we adjust relative times after
 		 * getting notification that previous packet events
 		 * have completed, if any.
 		 */
-		adjust_relative_event_times(state, event);
+		adjust_relative_event_times(global_state, event);
 
 		switch (event->type) {
 		case PACKET_EVENT:
 			/* For wire clients, the server handles packets. */
 			if (!config->is_wire_client) {
-				run_local_packet_event(state, event,
+				run_local_packet_event(global_state, event,
 						       event->event.packet);
 			}
 			break;
 		case SYSCALL_EVENT:
-			run_system_call_event(state, event,
+			run_system_call_event(global_state, event,
 					      event->event.syscall);
 			break;
 		case COMMAND_EVENT:
-			run_command_event(state, event,
+			run_command_event(global_state, event,
 					  event->event.command);
 			break;
 		case CODE_EVENT:
-			run_code_event(state, event,
+			run_code_event(global_state, event,
 				       event->event.code->text);
 			break;
 		case INVALID_EVENT:
@@ -676,22 +676,22 @@ void run_script(struct config *config, struct script *script)
 	}
 
 	/* Wait for any outstanding packet events we requested on the server. */
-	if (state->wire_client != NULL)
-		wire_client_next_event(state->wire_client, NULL);
+	if (global_state->wire_client != NULL)
+		wire_client_next_event(global_state->wire_client, NULL);
 
 	if (run_cleanup_command() == STATUS_ERR)
 		exit(EXIT_FAILURE);
 
-	if (code_execute(state->code, &error)) {
-		char *script_path = strdup(state->config->script_path);
-		state_free(state, 1);
+	if (code_execute(global_state->code, &error)) {
+		char *script_path = strdup(global_state->config->script_path);
+		state_free(global_state, 1);
 		die("%s: error executing code: %s\n",
 		    script_path, error);
 		free(script_path);
 		free(error);
 	}
 
-	state_free(state, 0);
+	state_free(global_state, 0);
 
 	DEBUGP("run_script: done running\n");
 }

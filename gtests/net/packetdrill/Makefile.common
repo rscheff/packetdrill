@@ -1,6 +1,7 @@
 all: binaries
 
-CFLAGS += -g
+CFLAGS += -g -Wfloat-equal -Wundef -ftrapv -Wshadow
+CFLAGS += -Wextra -Wno-sign-compare -Wno-unused-parameter -Wno-missing-field-initializers
 #CFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer -fsanitize-coverage=trace-cmp,trace-gep,trace-div
 
 parser.o: parser.y
