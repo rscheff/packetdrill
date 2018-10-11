@@ -662,7 +662,7 @@ static int map_inbound_icmp_packet(
 static int map_inbound_sctp_packet(
 	struct socket *socket, struct packet *live_packet, char **error)
 {
-	struct sctp_chunks_iterator iter1;
+	struct sctp_chunks_iterator chunk_iter;
 	struct sctp_chunk *chunk;
 	struct _sctp_data_chunk *data;
 	struct _sctp_init_chunk *init;
@@ -691,9 +691,9 @@ static int map_inbound_sctp_packet(
 	contains_init_chunk = false;
 	/* Map the TSNs and the initiate tags in the INIT and INIT-ACK chunk */
 	if ((live_packet->flags & FLAGS_SCTP_GENERIC_PACKET) == 0) {
-		for (chunk = sctp_chunks_begin(live_packet, &iter1, error);
+		for (chunk = sctp_chunks_begin(live_packet, &chunk_iter, error);
 		     chunk != NULL;
-		     chunk = sctp_chunks_next(&iter1, error)) {
+		     chunk = sctp_chunks_next(&chunk_iter, error)) {
 			if (*error != NULL) {
 				DEBUGP("Partial chunk detected\n");
 				free(*error);
@@ -826,12 +826,12 @@ static int map_inbound_sctp_packet(
 					reconfig = (struct _sctp_reconfig_chunk *)chunk;
 					if (chunk_length >= sizeof(struct _sctp_reconfig_chunk) + 4) {
 						struct sctp_parameter *parameter;
-						struct sctp_parameters_iterator iter2;
+						struct sctp_parameters_iterator param_iter;
 						int parameters_length = ntohs(reconfig->length) - sizeof(struct _sctp_reconfig_chunk);
 						for (parameter = sctp_parameters_begin(reconfig->parameter, parameters_length,
-										       &iter2, error);
+										       &param_iter, error);
 						     parameter != NULL;
-						     parameter = sctp_parameters_next(&iter2, error)) {
+						     parameter = sctp_parameters_next(&param_iter, error)) {
 							if (*error != NULL) {
 								DEBUGP("Partial parameter detected\n");
 								free(*error);
@@ -1036,7 +1036,7 @@ static int map_outbound_live_sctp_packet(
 	struct packet *script_packet,
 	char **error)
 {
-	struct sctp_chunks_iterator iter1;
+	struct sctp_chunks_iterator chunk_iter;
 	struct sctp_chunk *chunk;
 	struct _sctp_data_chunk *data;
 	struct _sctp_init_chunk *init;
@@ -1056,9 +1056,9 @@ static int map_outbound_live_sctp_packet(
 	assert(*error == NULL);
 	/* FIXME: transform v-tag in the common header*/
 	DEBUGP("map_outbound_live_sctp_packet\n");
-	for (chunk = sctp_chunks_begin(actual_packet, &iter1, error);
+	for (chunk = sctp_chunks_begin(actual_packet, &chunk_iter, error);
 	     chunk != NULL;
-	     chunk = sctp_chunks_next(&iter1, error)) {
+	     chunk = sctp_chunks_next(&chunk_iter, error)) {
 		if (*error != NULL) {
 			free(*error);
 			asprintf(error, "Partial chunk for outbound packet");;
@@ -1136,13 +1136,13 @@ static int map_outbound_live_sctp_packet(
 			reconfig = (struct _sctp_reconfig_chunk *)chunk;
 			if (reconfig->length > sizeof(struct _sctp_reconfig_chunk)) {
 				struct sctp_parameter *parameter;
-				struct sctp_parameters_iterator iter2;
+				struct sctp_parameters_iterator param_iter;
 				int parameters_length = ntohs(reconfig->length) - sizeof(struct _sctp_reconfig_chunk);
 				for (parameter = sctp_parameters_begin(reconfig->parameter,
 						parameters_length,
-						&iter2, error);
+						&param_iter, error);
 					parameter != NULL;
-					parameter = sctp_parameters_next(&iter2, error)) {
+					parameter = sctp_parameters_next(&param_iter, error)) {
 					if (*error != NULL) {
 						free(*error);
 						asprintf(error, "Partial parameter for outbound packet");;

@@ -735,11 +735,11 @@ static int check_sockaddr(struct expression *sockaddr_expr, struct sockaddr *liv
 				}
 				if (live_sockaddr->sin6_addr.s6_addr != script_sockaddr->sin6_addr.s6_addr) {
 					char expected_addr[INET6_ADDRSTRLEN];
-					char live_addr2[INET6_ADDRSTRLEN];
+					char live_addr_actual[INET6_ADDRSTRLEN];
 					inet_ntop(AF_INET6, &script_sockaddr->sin6_addr, expected_addr, INET6_ADDRSTRLEN);
-					inet_ntop(AF_INET6, &live_sockaddr->sin6_addr, live_addr2, INET6_ADDRSTRLEN);
+					inet_ntop(AF_INET6, &live_sockaddr->sin6_addr, live_addr_actual, INET6_ADDRSTRLEN);
 					asprintf(error, "sockaddr_in6 from.sin6_addr. expected: %s actual %s",
-						 expected_addr, live_addr2);
+						 expected_addr, live_addr_actual);
 					return STATUS_ERR;
 				}
 			}
