@@ -28,7 +28,8 @@
 #include "tcp.h"
 
 /* The full list of valid TCP bit flag characters */
-static const char valid_tcp_flags[] = "FSRP.EWC";
+/* numeric 0..7 used as shorthands for the ACE field */
+static const char valid_tcp_flags[] = "FSRP.EWCN01234567";
 
 /* Are all the TCP flags in the given string valid? */
 static bool is_tcp_flags_spec_valid(const char *flags, char **error)
@@ -173,8 +174,24 @@ struct packet *new_tcp_packet(int address_family,
 	packet->tcp->psh = is_tcp_flag_set('P', flags);
 	packet->tcp->ack = is_tcp_flag_set('.', flags);
 	packet->tcp->urg = 0;
-	packet->tcp->ece = is_tcp_flag_set('E', flags);
-	packet->tcp->cwr = is_tcp_flag_set('W', flags);
+	packet->tcp->ece = is_tcp_flag_set('E', flags) ||
+	                   is_tcp_flag_set('1', flags) ||
+	                   is_tcp_flag_set('3', flags) ||
+	                   is_tcp_flag_set('5', flags) ||
+	                   is_tcp_flag_set('7', flags);
+
+	packet->tcp->cwr = is_tcp_flag_set('W', flags) ||
+	                   is_tcp_flag_set('C', flags) ||
+	                   is_tcp_flag_set('2', flags) ||
+	                   is_tcp_flag_set('3', flags) ||
+	                   is_tcp_flag_set('6', flags) ||
+	                   is_tcp_flag_set('7', flags);
+
+	packet->tcp->ns  = is_tcp_flag_set('N', flags) ||
+	                   is_tcp_flag_set('4', flags) ||
+	                   is_tcp_flag_set('5', flags) ||
+	                   is_tcp_flag_set('6', flags) ||
+	                   is_tcp_flag_set('7', flags);
 
 	if (tcp_options == NULL) {
 		packet->flags |= FLAG_OPTIONS_NOCHECK;

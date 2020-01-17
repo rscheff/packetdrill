@@ -206,6 +206,8 @@ static int tcp_packet_to_string(FILE *s, struct packet *packet, int i,
 		fputc('E', s);   /* ECN *E*cho sent (ECN) */
 	if (packet->tcp->cwr)
 		fputc('W', s);   /* Congestion *W*indow reduced (ECN) */
+	if (packet->tcp->ns)
+		fputc('N', s);   /* Nonce bit */
 
 	fprintf(s, " %u:%u(%u)",
 		ntohl(packet->tcp->seq),
