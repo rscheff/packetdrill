@@ -29,7 +29,7 @@
 
 /* The full list of valid TCP bit flag characters */
 /* numeric 0..7 used as shorthands for the ACE field */
-static const char valid_tcp_flags[] = "FSRP.EWCN01234567";
+static const char valid_tcp_flags[] = "FSRP.EWA01234567";
 
 /* Are all the TCP flags in the given string valid? */
 static bool is_tcp_flags_spec_valid(const char *flags, char **error)
@@ -181,13 +181,12 @@ struct packet *new_tcp_packet(int address_family,
 	                   is_tcp_flag_set('7', flags);
 
 	packet->tcp->cwr = is_tcp_flag_set('W', flags) ||
-	                   is_tcp_flag_set('C', flags) ||
 	                   is_tcp_flag_set('2', flags) ||
 	                   is_tcp_flag_set('3', flags) ||
 	                   is_tcp_flag_set('6', flags) ||
 	                   is_tcp_flag_set('7', flags);
 
-	packet->tcp->ns  = is_tcp_flag_set('N', flags) ||
+	packet->tcp->ae  = is_tcp_flag_set('A', flags) ||
 	                   is_tcp_flag_set('4', flags) ||
 	                   is_tcp_flag_set('5', flags) ||
 	                   is_tcp_flag_set('6', flags) ||
