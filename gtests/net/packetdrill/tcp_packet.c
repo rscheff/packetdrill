@@ -27,9 +27,17 @@
 #include "ip_packet.h"
 #include "tcp.h"
 
-/* The full list of valid TCP bit flag characters */
-/* numeric 0..7 used as shorthands for the ACE field */
-static const char valid_tcp_flags[] = "FSRP.EWA01234567";
+/*
+ * The full list of valid TCP bit flag characters
+ * numeric 0..7 used as shorthands for the ACE field
+ * Note that the parser will accept the dot only as
+ * last character in a packetdrill script, and numerals
+ * should come after any letters.
+ *
+ * In the list of valid flags, the dot as the most
+ * common flag, is placed first
+ */
+static const char valid_tcp_flags[] = ".FSRPEWA01234567";
 static const char ace_tcp_flags[] = "01234567";
 static const char ecn_tcp_flags[] = "EWA";
 
@@ -37,8 +45,8 @@ static const char ecn_tcp_flags[] = "EWA";
 static bool is_tcp_flags_spec_valid(const char *flags, char **error)
 {
 	const char *s;
-	int overlap = 0;
-	int conflict = 0;
+	bool has_ecn_flag = false;
+	bool has_ace_flag = false;
 
 	for (s = flags; *s != '\0'; ++s) {
 		if (!strchr(valid_tcp_flags, *s)) {
@@ -46,21 +54,21 @@ static bool is_tcp_flags_spec_valid(const char *flags, char **error)
 			return false;
 		}
 		if (strchr(ecn_tcp_flags, *s)) {
-			conflict = 1;
-			if (overlap) {
+			has_ecn_flag = true;
+			if (has_ace_flag) {
 				asprintf(error, "Conflicting TCP flag: '%c'", *s);
 				return false;
 			}
 		}
 		if (strchr(ace_tcp_flags, *s)) {
-			if (conflict) {
+			if (has_ecn_flag) {
 				asprintf(error, "Conflicting TCP flag: '%c'", *s);
 				return false;
 			}
-			if (!overlap) {
-				overlap = 1;
+			if (!has_ace_flag) {
+				has_ace_flag = true;
 			} else {
-				asprintf(error, "Overlapping TCP flag: '%c'", *s);
+				asprintf(error, "Conflicting TCP flag: '%c'", *s);
 				return false;
 			}
 		}
