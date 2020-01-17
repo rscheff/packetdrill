@@ -30,16 +30,39 @@
 /* The full list of valid TCP bit flag characters */
 /* numeric 0..7 used as shorthands for the ACE field */
 static const char valid_tcp_flags[] = "FSRP.EWA01234567";
+static const char ace_tcp_flags[] = "01234567";
+static const char ecn_tcp_flags[] = "EWA";
 
 /* Are all the TCP flags in the given string valid? */
 static bool is_tcp_flags_spec_valid(const char *flags, char **error)
 {
 	const char *s;
+	int overlap = 0;
+	int conflict = 0;
 
 	for (s = flags; *s != '\0'; ++s) {
 		if (!strchr(valid_tcp_flags, *s)) {
 			asprintf(error, "Invalid TCP flag: '%c'", *s);
 			return false;
+		}
+		if (strchr(ecn_tcp_flags, *s)) {
+			conflict = 1;
+			if (overlap) {
+				asprintf(error, "Conflicting TCP flag: '%c'", *s);
+				return false;
+			}
+		}
+		if (strchr(ace_tcp_flags, *s)) {
+			if (conflict) {
+				asprintf(error, "Conflicting TCP flag: '%c'", *s);
+				return false;
+			}
+			if (!overlap) {
+				overlap = 1;
+			} else {
+				asprintf(error, "Overlapping TCP flag: '%c'", *s);
+				return false;
+			}
 		}
 	}
 	return true;
@@ -49,6 +72,19 @@ static bool is_tcp_flags_spec_valid(const char *flags, char **error)
 static inline int is_tcp_flag_set(char flag, const char *flags)
 {
 	return (strchr(flags, flag) != NULL) ? 1 : 0;
+}
+
+/* find first numeric flag for ACE */
+static inline int tcp_flag_ace_count( const char *flags)
+{
+	const char *s;
+
+	for (s = flags; *s != '\0'; ++s) {
+		if (strchr(ace_tcp_flags, *s)) {
+			return ((int)s - (int)'0');
+		}
+	}
+	return 0;
 }
 
 struct packet *new_tcp_packet(int address_family,
@@ -79,6 +115,7 @@ struct packet *new_tcp_packet(int address_family,
 	const int tcp_header_bytes = sizeof(struct tcp) + tcp_option_bytes;
 	int ip_bytes;
 	bool encapsulate = (udp_src_port > 0) || (udp_dst_port > 0);
+	int ace;
 
 	/* Sanity-check all the various lengths */
 	if (ip_option_bytes & 0x3) {
@@ -174,23 +211,17 @@ struct packet *new_tcp_packet(int address_family,
 	packet->tcp->psh = is_tcp_flag_set('P', flags);
 	packet->tcp->ack = is_tcp_flag_set('.', flags);
 	packet->tcp->urg = 0;
-	packet->tcp->ece = is_tcp_flag_set('E', flags) ||
-	                   is_tcp_flag_set('1', flags) ||
-	                   is_tcp_flag_set('3', flags) ||
-	                   is_tcp_flag_set('5', flags) ||
-	                   is_tcp_flag_set('7', flags);
 
-	packet->tcp->cwr = is_tcp_flag_set('W', flags) ||
-	                   is_tcp_flag_set('2', flags) ||
-	                   is_tcp_flag_set('3', flags) ||
-	                   is_tcp_flag_set('6', flags) ||
-	                   is_tcp_flag_set('7', flags);
-
-	packet->tcp->ae  = is_tcp_flag_set('A', flags) ||
-	                   is_tcp_flag_set('4', flags) ||
-	                   is_tcp_flag_set('5', flags) ||
-	                   is_tcp_flag_set('6', flags) ||
-	                   is_tcp_flag_set('7', flags);
+	if ((ace = tcp_flag_ace_count(flags)) != 0) {
+		/* after validity check, ACE value doesn't coexist with ECN flags */
+		packet->tcp->ece = (ace & 1);
+		packet->tcp->cwr = (ace & 2);
+		packet->tcp->ae  = (ace & 4);
+	} else {
+		packet->tcp->ece = is_tcp_flag_set('E', flags);
+		packet->tcp->cwr = is_tcp_flag_set('W', flags);
+		packet->tcp->ae  = is_tcp_flag_set('A', flags); 
+	}
 
 	if (tcp_options == NULL) {
 		packet->flags |= FLAG_OPTIONS_NOCHECK;
