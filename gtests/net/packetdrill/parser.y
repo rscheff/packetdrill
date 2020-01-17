@@ -2678,9 +2678,9 @@ ip_ecn
 ;
 
 flags
-: WORD         { printf("single word %s %s\n", $$, $1); $$ = $1; }
-| INTEGER      { printf("single int %s %lld\n", $$, $1);$$ = strdup(yytext); }
-| INTEGER '.'  { asprintf(&($$), "%lld.", $1); printf("int dot %s %lld\n", $$, $1);  }
+: WORD         { $$ = $1; }
+| INTEGER      { $$ = strdup(yytext); }
+| INTEGER '.'  { asprintf(&($$), "%lld.", $1); }
 | '.'          { $$ = strdup("."); }
 | WORD '.'     { asprintf(&($$), "%s.", $1); free($1); }
 | '-'          { $$ = strdup(""); }  /* no TCP flags set in segment */
