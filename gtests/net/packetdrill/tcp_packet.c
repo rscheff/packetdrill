@@ -225,8 +225,6 @@ struct packet *new_tcp_packet(int address_family,
 		packet->tcp->ece = ((ace & 1) == 1);
 		packet->tcp->cwr = ((ace & 2) == 2);
 		packet->tcp->ae  = ((ace & 4) == 4);
-		printf("ace: %d A:%d W:%d E:%d\n", ace,
-		    packet->tcp->ae, packet->tcp->cwr, packet->tcp->ece);
 	} else {
 		packet->tcp->ece = is_tcp_flag_set('E', flags);
 		packet->tcp->cwr = is_tcp_flag_set('W', flags);
