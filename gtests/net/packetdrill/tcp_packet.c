@@ -222,13 +222,15 @@ struct packet *new_tcp_packet(int address_family,
 
 	if ((ace = tcp_flag_ace_count(flags)) != 0) {
 		/* after validity check, ACE value doesn't coexist with ECN flags */
-		packet->tcp->ece = (ace & 1);
-		packet->tcp->cwr = (ace & 2);
-		packet->tcp->ae  = (ace & 4);
+		packet->tcp->ece = ((ace & 1) == 1);
+		packet->tcp->cwr = ((ace & 2) == 2);
+		packet->tcp->ae  = ((ace & 4) == 4);
+		printf("ace: %d A:%d W:%d E:%d\n", ace,
+		    packet->tcp->ae, packet->tcp->cwr, packet->tcp->ece);
 	} else {
 		packet->tcp->ece = is_tcp_flag_set('E', flags);
 		packet->tcp->cwr = is_tcp_flag_set('W', flags);
-		packet->tcp->ae  = is_tcp_flag_set('A', flags); 
+		packet->tcp->ae  = is_tcp_flag_set('A', flags);
 	}
 
 	if (tcp_options == NULL) {
