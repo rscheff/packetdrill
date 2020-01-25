@@ -202,7 +202,7 @@ static int tcp_packet_to_string(FILE *s, struct packet *packet, int i,
 		fputc('.', s);
 	if (packet->tcp->urg)
 		fputc('U', s);
-	if (!packet->tcp->syn && parse_tcp_ace_field) {
+	if (packet->flags & FLAG_PARSE_ACE) {
 		int ace = 0;
 		if (packet->tcp->ece)
 			ace |= 1;
@@ -218,23 +218,6 @@ static int tcp_packet_to_string(FILE *s, struct packet *packet, int i,
 			fputc('W', s);   /* Congestion *W*indow reduced (ECN) */
 		if (packet->tcp->ae)
 			fputc('A', s);   /* AccECN bit */
-
-		/* Check for AccECN handshake */
-		if (packet->tcp->syn && !packet->tcp->ack) {
-			if (packet->tcp->ae && packet->tcp->cwr && packet->tcp->ece)
-				parse_tcp_ace_field = true;
-			else
-				parse_tcp_ace_field = false;
-		} else
-		if (packet->tcp->syn && packet->tcp->ack && parse_tcp_ace_field) {
-			if ((!packet->tcp->ae &&  packet->tcp->cwr && !packet->tcp->ece) ||
-			    (!packet->tcp->ae &&  packet->tcp->cwr &&  packet->tcp->ece) ||
-			    ( packet->tcp->ae && !packet->tcp->cwr && !packet->tcp->ece) ||
-			    ( packet->tcp->ae &&  packet->tcp->cwr && !packet->tcp->ece))
-				parse_tcp_ace_field = true;
-			else
-				parse_tcp_ace_field = false;
-		}
 	}
 
 	fprintf(s, " %u:%u(%u)",
